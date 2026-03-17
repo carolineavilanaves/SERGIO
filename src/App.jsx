@@ -47,7 +47,6 @@ function useTyping(text, speed=14) {
   return {out,done};
 }
 
-// ── Logo SVG ─────────────────────────────────────────────────────────────────
 function Logo({size=64}) {
   const s=size;
   return (
@@ -62,7 +61,6 @@ function Logo({size=64}) {
   );
 }
 
-// ── Tela de entrada ───────────────────────────────────────────────────────────
 function CodeEntry({onEnter}) {
   const [code,setCode]=useState("");
   const [err,setErr]=useState("");
@@ -105,7 +103,6 @@ function CodeEntry({onEnter}) {
   );
 }
 
-// ── Formulário de intake ──────────────────────────────────────────────────────
 function IntakeForm({sessionCode, existingSession, onSubmit}) {
   const nameRef=useRef(), emailRef=useRef(), relationRef=useRef();
   const otherRef=useRef(), topicRef=useRef(), contextRef=useRef();
@@ -198,7 +195,6 @@ function IntakeForm({sessionCode, existingSession, onSubmit}) {
   );
 }
 
-// ── Chat com Sergio ───────────────────────────────────────────────────────────
 function SergioChat({intake, sessionData, onDone, onWait}) {
   const [messages,setMessages]=useState([]);
   const [input,setInput]=useState("");
@@ -269,14 +265,13 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
     else prompt=userMsg;
 
     try {
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+      const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:[...hist,{role:"user",content:prompt}]})});
       const d=await r.json();
       const reply=d.content?.map(b=>b.text||"").join("")||"Erro na conexão.";
 
       setMsgs(m=>[...(isInit?[]:m),{role:"sergio",text:reply}]);
 
-      // Detectar transições de fase
       if(isPartA&&!isPondering&&reply.includes("retornarei a você")){
         setPhase("show_link");
         const updatedMsgs=[...currentMsgs,{role:"sergio",text:reply}];
@@ -331,8 +326,6 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
   return (
     <div style={{display:"flex",flexDirection:"column",height:"100vh",background:"#0a0f12",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>
       <style>{css}</style>
-
-      {/* Header */}
       <div style={{padding:"0.9rem 1.4rem",borderBottom:"1px solid #1a2e38",background:"#0d1519",display:"flex",alignItems:"center",gap:"0.9rem",flexShrink:0}}>
         <div style={{width:38,height:38,borderRadius:"50%",background:"linear-gradient(135deg,#1e6b78,#26909f)",display:"flex",alignItems:"center",justifyContent:"center",color:"#e8f4f7",boxShadow:"0 0 14px #1e6b7866",fontSize:"1rem"}}>S</div>
         <div>
@@ -345,7 +338,6 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
         <div style={{marginLeft:"auto",fontSize:"0.6rem",color:"#3a5a64",letterSpacing:"0.1em"}}>{intake.sessionCode}</div>
       </div>
 
-      {/* Mensagens */}
       <div style={{flex:1,overflowY:"auto",padding:"1.4rem",display:"flex",flexDirection:"column",gap:"1.1rem"}}>
         {messages.map((m,i)=>(
           <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start",animation:"fadeUp 0.3s ease"}}>
@@ -363,12 +355,11 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
           </div>
         )}
 
-        {/* Parte A: link para B */}
         {phase==="show_link"&&(
           <div style={{background:"#111c22",border:"1px solid #1e6b7844",borderTop:"2px solid #1e6b78",borderRadius:4,padding:"1.5rem",animation:"fadeUp 0.4s ease"}}>
             <div style={{fontSize:"0.62rem",letterSpacing:"0.25em",color:"#2bb5c8",marginBottom:"0.8rem"}}>PRÓXIMO PASSO — CONVIDAR A OUTRA PARTE</div>
             <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8,marginBottom:"1rem"}}>
-              Envie o link abaixo para <strong>{intake.otherName}</strong> acessar a sessão e dar a perspectiva dele(a):
+              Envie o link abaixo para <strong>{intake.otherName}</strong>:
             </p>
             <div style={{background:"#0a1417",border:"1px solid #1a2e38",borderRadius:2,padding:"0.75rem 1rem",fontSize:"0.8rem",color:"#5a7d89",wordBreak:"break-all",marginBottom:"0.8rem",fontFamily:"monospace",lineHeight:1.6}}>
               {sessionUrl}
@@ -377,7 +368,7 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
               {linkCopied?"✓ Copiado!":"⎘ Copiar link"}
             </button>
             <p style={{color:"#3a5a64",fontSize:"0.75rem",marginTop:"1rem",lineHeight:1.7}}>
-              Quando {intake.otherName} concluir, você receberá uma notificação em <strong style={{color:"#5a7d89"}}>{intake.email}</strong> para retornar à ponderação. Você também pode voltar aqui com o mesmo código a qualquer momento para verificar o status.
+              Quando {intake.otherName} concluir, você receberá uma notificação em <strong style={{color:"#5a7d89"}}>{intake.email}</strong>.
             </p>
             <button onClick={onWait} style={{marginTop:"0.8rem",background:"transparent",border:"1px solid #1a2e38",borderRadius:2,padding:"0.6rem 1.4rem",color:"#5a7d89",fontSize:"0.72rem",letterSpacing:"0.15em",cursor:"pointer",fontFamily:"inherit"}}>
               Ir para sala de espera →
@@ -385,38 +376,29 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
           </div>
         )}
 
-        {/* Parte B: oitiva concluída */}
         {phase==="b_done"&&(
           <div style={{background:"#111c22",border:"1px solid #1e6b7844",borderTop:"2px solid #1e6b78",borderRadius:4,padding:"1.5rem",animation:"fadeUp 0.4s ease"}}>
             <div style={{fontSize:"0.62rem",letterSpacing:"0.25em",color:"#2bb5c8",marginBottom:"0.8rem"}}>OITIVA CONCLUÍDA</div>
-            <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8,marginBottom:"0.5rem"}}>
-              O Sergio retornará agora a <strong>{sessionData?.partA?.name||intake.otherName}</strong> para a ponderação pós-oitiva.
-            </p>
-            <p style={{color:"#3a5a64",fontSize:"0.75rem",lineHeight:1.7}}>
-              Caso necessário, você receberá uma notificação em <strong style={{color:"#5a7d89"}}>{intake.email}</strong> para uma segunda rodada. Fique atento(a).
+            <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8}}>
+              O Sergio retornará a <strong>{sessionData?.partA?.name||intake.otherName}</strong> para a ponderação.
             </p>
           </div>
         )}
 
-        {/* Ponderação: precisa de B novamente */}
         {phase==="need_b_again"&&(
           <div style={{background:"#111c22",border:"1px solid #c9a84c44",borderTop:"2px solid #c9a84c",borderRadius:4,padding:"1.5rem",animation:"fadeUp 0.4s ease"}}>
             <div style={{fontSize:"0.62rem",letterSpacing:"0.25em",color:"#c9a84c",marginBottom:"0.8rem"}}>SEGUNDA RODADA ACIONADA</div>
-            <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8,marginBottom:"0.5rem"}}>
-              O Sergio entende que precisa ouvir <strong>{sessionData?.partB?.name}</strong> mais uma vez antes de emitir o consenso.
-            </p>
-            <p style={{color:"#3a5a64",fontSize:"0.75rem",lineHeight:1.7}}>
-              Uma notificação será enviada para <strong style={{color:"#5a7d89"}}>{sessionData?.partB?.email}</strong>. Você será notificado(a) em <strong style={{color:"#5a7d89"}}>{intake.email}</strong> quando o processo estiver concluído.
+            <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8}}>
+              O Sergio precisa ouvir <strong>{sessionData?.partB?.name}</strong> mais uma vez.
             </p>
           </div>
         )}
 
-        {/* Consenso liberado */}
         {phase==="consensus_ready"&&(
           <div style={{background:"#111c22",border:"1px solid #c9a84c44",borderTop:"2px solid #c9a84c",borderRadius:4,padding:"1.5rem",animation:"fadeUp 0.4s ease"}}>
             <div style={{fontSize:"0.62rem",letterSpacing:"0.25em",color:"#c9a84c",marginBottom:"0.8rem"}}>◆ MEDIAÇÃO COMPLETA</div>
             <p style={{color:"#c8dde2",fontSize:"0.9rem",lineHeight:1.8,marginBottom:"1.2rem"}}>
-              O Sergio ouviu e ponderou com ambas as partes. O consenso formal pode ser gerado agora.
+              O Sergio ouviu e ponderou com ambas as partes. O consenso pode ser gerado agora.
             </p>
             <button onClick={()=>onDone(messagesRef.current)} style={{background:"linear-gradient(135deg,#c9a84c33,#c9a84c11)",border:"1px solid #c9a84c",borderRadius:2,padding:"0.85rem 2rem",color:"#c9a84c",fontSize:"0.78rem",letterSpacing:"0.2em",cursor:"pointer",fontFamily:"inherit"}}>
               GERAR CONSENSO FINAL →
@@ -427,7 +409,6 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
         <div ref={bottomRef}/>
       </div>
 
-      {/* Input */}
       {chatPhase&&(
         <div style={{padding:"0.9rem 1.4rem",borderTop:"1px solid #1a2e38",background:"#0d1519",display:"flex",gap:"0.7rem",flexShrink:0}}>
           <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&send()}
@@ -441,7 +422,6 @@ Português brasileiro. 2-3 parágrafos. Sigilo absoluto sobre a outra parte.`;
   );
 }
 
-// ── Sala de Espera ────────────────────────────────────────────────────────────
 function WaitingRoom({sessionCode, intake, onReady}) {
   const [sessionPhase,setSessionPhase]=useState(null);
   const [polls,setPolls]=useState(0);
@@ -466,10 +446,10 @@ function WaitingRoom({sessionCode, intake, onReady}) {
   if(sessionPhase==="ready_consensus") status="consensus";
 
   const configs={
-    waiting:{color:"#2bb5c8",icon:"○",title:"Aguardando a outra parte",body:`O Sergio está ouvindo a perspectiva da outra parte. Você receberá uma notificação em ${intake?.email} quando for sua vez de retornar.`,btn:null},
-    ponder_a:{color:"#c9a84c",icon:"◈",title:"O Sergio quer conversar com você",body:"O Sergio já ouviu as duas partes e está pronto para a etapa de ponderação com você.",btn:{label:"INICIAR PONDERAÇÃO →",fn:()=>onReady("ponder_a")}},
-    ponder_b:{color:"#c9a84c",icon:"◈",title:"O Sergio precisa ouvir você novamente",body:"Após a ponderação com a outra parte, o Sergio entende que precisa conversar com você mais uma vez.",btn:{label:"CONTINUAR →",fn:()=>onReady("ponder_b")}},
-    consensus:{color:"#c9a84c",icon:"◆",title:"Mediação concluída",body:"O Sergio ouviu todas as partes e está pronto para emitir o consenso formal.",btn:{label:"VER CONSENSO →",fn:()=>onReady("consensus")}},
+    waiting:{color:"#2bb5c8",icon:"○",title:"Aguardando a outra parte",body:`O Sergio está ouvindo a outra parte. Você receberá uma notificação em ${intake?.email} quando for sua vez.`,btn:null},
+    ponder_a:{color:"#c9a84c",icon:"◈",title:"O Sergio quer conversar com você",body:"O Sergio já ouviu as duas partes e está pronto para a ponderação.",btn:{label:"INICIAR PONDERAÇÃO →",fn:()=>onReady("ponder_a")}},
+    ponder_b:{color:"#c9a84c",icon:"◈",title:"O Sergio precisa ouvir você novamente",body:"O Sergio precisa conversar com você mais uma vez antes do consenso.",btn:{label:"CONTINUAR →",fn:()=>onReady("ponder_b")}},
+    consensus:{color:"#c9a84c",icon:"◆",title:"Mediação concluída",body:"O Sergio está pronto para emitir o consenso formal.",btn:{label:"VER CONSENSO →",fn:()=>onReady("consensus")}},
   };
 
   const cfg=configs[status];
@@ -478,14 +458,14 @@ function WaitingRoom({sessionCode, intake, onReady}) {
     <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"2rem",background:"radial-gradient(ellipse at 50% 30%,#0e2028 0%,#0a0f12 70%)",fontFamily:"'Cormorant Garamond',Georgia,serif"}}>
       <style>{css}</style>
       <div style={{background:"#111c22",border:`1px solid ${cfg.color}33`,borderTop:`2px solid ${cfg.color}`,borderRadius:4,padding:"2.5rem",maxWidth:440,width:"100%",textAlign:"center"}}>
-        <div style={{fontSize:"1.8rem",color:cfg.color,marginBottom:"1rem",letterSpacing:"0.1em"}}>{cfg.icon}</div>
+        <div style={{fontSize:"1.8rem",color:cfg.color,marginBottom:"1rem"}}>{cfg.icon}</div>
         <div style={{fontSize:"0.58rem",letterSpacing:"0.3em",color:cfg.color,marginBottom:"0.8rem"}}>SESSÃO · {sessionCode} · PARTE {intake?.partLabel}</div>
         <h2 style={{fontSize:"1.5rem",fontWeight:300,color:"#e8f4f7",marginBottom:"0.8rem",lineHeight:1.3}}>{cfg.title}</h2>
         <p style={{color:"#5a7d89",fontSize:"0.9rem",lineHeight:1.8,marginBottom:"1.5rem"}}>{cfg.body}</p>
         {status==="waiting"&&(
           <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"0.5rem",color:"#3a5a64",fontSize:"0.72rem",marginBottom:"1rem"}}>
             <span style={{width:6,height:6,borderRadius:"50%",background:"#2bb5c8",display:"inline-block",animation:"pulse 1.5s infinite"}}/>
-            Verificando status... ({polls}×)
+            Verificando... ({polls}×)
           </div>
         )}
         {cfg.btn&&(
@@ -498,7 +478,6 @@ function WaitingRoom({sessionCode, intake, onReady}) {
   );
 }
 
-// ── Consenso Final ────────────────────────────────────────────────────────────
 function ConsensusView({intake, sessionCode}) {
   const [text,setText]=useState(""),[loading,setLoading]=useState(true);
   const {out,done}=useTyping(text);
@@ -509,14 +488,14 @@ function ConsensusView({intake, sessionCode}) {
       const sections=[
         sd.chatA&&`=== PRIMEIRA OITIVA — ${sd.partA?.name} ===\n${sd.chatA.map(m=>`[${m.role==="user"?sd.partA?.name:"Sergio"}]: ${m.text}`).join("\n\n")}`,
         sd.chatB&&`=== PRIMEIRA OITIVA — ${sd.partB?.name} ===\n${sd.chatB.map(m=>`[${m.role==="user"?sd.partB?.name:"Sergio"}]: ${m.text}`).join("\n\n")}`,
-        sd.chatPonderA&&`=== PONDERAÇÃO PÓS-OITIVA — ${sd.partA?.name} ===\n${sd.chatPonderA.map(m=>`[${m.role==="user"?sd.partA?.name:"Sergio"}]: ${m.text}`).join("\n\n")}`,
+        sd.chatPonderA&&`=== PONDERAÇÃO — ${sd.partA?.name} ===\n${sd.chatPonderA.map(m=>`[${m.role==="user"?sd.partA?.name:"Sergio"}]: ${m.text}`).join("\n\n")}`,
         sd.chatPonderB&&`=== SEGUNDA RODADA — ${sd.partB?.name} ===\n${sd.chatPonderB.map(m=>`[${m.role==="user"?sd.partB?.name:"Sergio"}]: ${m.text}`).join("\n\n")}`,
       ].filter(Boolean).join("\n\n---\n\n");
 
       try {
-        const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
+        const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages:[{role:"user",content:
-            `Você é Sergio, mediador. Com base em todo o processo de mediação transcrito abaixo, emita um CONSENSO FORMAL DE MEDIAÇÃO.\n\n${sections}\n\nPartes: ${sd.partA?.name||"Parte A"} e ${sd.partB?.name||"Parte B"}. Relação: ${sd.partA?.relation}. Tema: ${sd.topic}.\n\nEstrutura obrigatória:\n1) SÍNTESE DO CONFLITO\n2) PERSPECTIVA DE ${sd.partA?.name||"PARTE A"}\n3) PERSPECTIVA DE ${sd.partB?.name||"PARTE B"}\n4) PONTOS DE CONVERGÊNCIA\n5) RECOMENDAÇÕES (3-4 pontos concretos)\n6) PRÓXIMOS PASSOS PARA CADA PARTE\n7) Assinatura formal — Sergio, Mediador\n\nPortuguês formal, empático, resolutivo. Mantenha sigilo: não cite detalhes confidenciais que uma parte revelou que a outra não saiba.`
+            `Você é Sergio, mediador. Com base em todo o processo de mediação transcrito abaixo, emita um CONSENSO FORMAL DE MEDIAÇÃO.\n\n${sections}\n\nPartes: ${sd.partA?.name||"Parte A"} e ${sd.partB?.name||"Parte B"}. Relação: ${sd.partA?.relation}. Tema: ${sd.topic}.\n\nEstrutura obrigatória:\n1) SÍNTESE DO CONFLITO\n2) PERSPECTIVA DE ${sd.partA?.name||"PARTE A"}\n3) PERSPECTIVA DE ${sd.partB?.name||"PARTE B"}\n4) PONTOS DE CONVERGÊNCIA\n5) RECOMENDAÇÕES (3-4 pontos concretos)\n6) PRÓXIMOS PASSOS PARA CADA PARTE\n7) Assinatura formal — Sergio, Mediador\n\nPortuguês formal, empático, resolutivo.`
           }]})});
         const d=await r.json();
         setText(d.content?.map(b=>b.text||"").join("")||"Erro ao gerar.");
@@ -536,7 +515,6 @@ function ConsensusView({intake, sessionCode}) {
           <div style={{fontSize:"0.82rem",color:"#5a7d89"}}>{sessionCode} · {new Date().toLocaleDateString("pt-BR",{year:"numeric",month:"long",day:"numeric"})}</div>
           <div style={{height:1,background:"linear-gradient(90deg,transparent,#c9a84c88,transparent)",marginTop:"1.4rem"}}/>
         </div>
-
         <div style={{background:"#111c22",border:"1px solid #1a2e38",borderTop:"2px solid #c9a84c44",borderRadius:4,padding:"2rem",minHeight:240}}>
           {loading
             ?<div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"3rem",gap:"1rem"}}>
@@ -546,9 +524,8 @@ function ConsensusView({intake, sessionCode}) {
             :<div style={{fontSize:"0.93rem",lineHeight:1.95,color:"#c8dde2",whiteSpace:"pre-wrap"}}>{out}{!done&&<span style={{animation:"blink 1s infinite",color:"#3dd6e8"}}>▎</span>}</div>
           }
         </div>
-
         {done&&(
-          <div style={{marginTop:"1.5rem",display:"flex",gap:"0.9rem",flexWrap:"wrap",animation:"fadeUp 0.4s ease"}}>
+          <div style={{marginTop:"1.5rem",display:"flex",gap:"0.9rem",flexWrap:"wrap"}}>
             <button onClick={()=>window.print()} style={{flex:1,background:"transparent",border:"1px solid #1e6b78",borderRadius:2,padding:"0.8rem",color:"#2bb5c8",fontSize:"0.72rem",letterSpacing:"0.2em",cursor:"pointer",fontFamily:"inherit"}}>↓ IMPRIMIR / PDF</button>
             <button onClick={()=>navigator.clipboard.writeText(text)} style={{flex:1,background:"transparent",border:"1px solid #1a2e38",borderRadius:2,padding:"0.8rem",color:"#5a7d89",fontSize:"0.72rem",letterSpacing:"0.2em",cursor:"pointer",fontFamily:"inherit"}}>⎘ COPIAR TEXTO</button>
           </div>
@@ -561,7 +538,6 @@ function ConsensusView({intake, sessionCode}) {
   );
 }
 
-// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   const [screen,setScreen]=useState("loading");
   const [sessionCode,setSessionCode]=useState("");
