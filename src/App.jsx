@@ -649,7 +649,7 @@ Respond in ${langName}. 2-3 paragraphs. Absolute confidentiality about the other
       setMsgs(m=>[...(isInit?[]:m),{role:"sergio",text:reply}]);
 
       // Detectar fim da oitiva A e gerar mensagem de convite
-      const donePhrasesA=["retornarei a você","retornarei para","retornaremos","I will return","volveré","je reviendrai","tornerò","戻ります","我将回来"];
+      const donePhrasesA=["retornarei","retornar","voltarei","voltar","return","volveré","volvere","reviendrai","tornerò","戻","回来","aguarde","wait","espere","ouvir","ouvirei","escutarei","hear","escuchar"];
       if(isPartA&&!isPondering&&donePhrasesA.some(p=>reply.includes(p))){
         setPhase("show_link");
         const updatedMsgs=[...currentMsgs,{role:"sergio",text:reply}];
