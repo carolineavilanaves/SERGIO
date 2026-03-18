@@ -1,23 +1,19 @@
 export default async function handler(req, res) {
-  if (req.method === "OPTIONS") {
-    res.setHeader("Access-Control-Allow-Origin", "*");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    return res.status(200).end();
-  }
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+  if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  const { action, key, value } = req.body || {};
+  const BASE = process.env.UPSTASH_REDIS_REST_URL;
+  const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const headers = { Authorization: `Bearer ${TOKEN}` };
 
-  const { action, key, value } = req.body;
-
-  // Operações do banco de dados (Upstash Redis)
   if (action === "get") {
     try {
-      const r = await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/get/${encodeURIComponent(key)}`, {
-        headers: { Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}` },
-      });
+      const r = await fetch(`${BASE}/get/${encodeURIComponent(key)}`, { headers });
       const d = await r.json();
       return res.status(200).json({ value: d.result });
     } catch (e) {
@@ -27,21 +23,20 @@ export default async function handler(req, res) {
 
   if (action === "set") {
     try {
-      await fetch(`${process.env.UPSTASH_REDIS_REST_URL}/set/${encodeURIComponent(key)}`, {
+      const encoded = encodeURIComponent(key);
+      const r = await fetch(`${BASE}/set/${encoded}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
-          "Content-Type": "application/json",
-        },
+        headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify(value),
       });
-      return res.status(200).json({ ok: true });
+      const d = await r.json();
+      return res.status(200).json({ ok: true, result: d });
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
   }
 
-  // Chamada ao Claude (Anthropic)
+  // Chamada ao Claude
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -53,8 +48,8 @@ export default async function handler(req, res) {
       body: JSON.stringify(req.body),
     });
     const data = await r.json();
-    res.status(200).json(data);
+    return res.status(200).json(data);
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 }
