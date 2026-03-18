@@ -5,14 +5,18 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).end();
 
-  const BASE = process.env.UPSTASH_REDIS_REST_URL;
-  const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
   const { action, key, value } = req.body || {};
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
   if (action === "get") {
     try {
-      const r = await fetch(`${BASE}/get/${encodeURIComponent(key)}`, {
-        headers: { Authorization: `Bearer ${TOKEN}` },
+      const r = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
+        method: "GET",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
       });
       const d = await r.json();
       return res.status(200).json({ value: d.result });
@@ -23,9 +27,12 @@ export default async function handler(req, res) {
 
   if (action === "set") {
     try {
-      const r = await fetch(`${BASE}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {
+      const r = await fetch(`${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(typeof value === "string" ? value : JSON.stringify(value))}`, {
         method: "GET",
-        headers: { Authorization: `Bearer ${TOKEN}` },
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
       });
       const d = await r.json();
       return res.status(200).json({ ok: true, result: d });
