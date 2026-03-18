@@ -357,11 +357,24 @@ const T = {
 
 const store = {
   async get(key) {
-    try { const r = await window.storage.get(key, true); return r ? JSON.parse(r.value) : null; }
-    catch { return null; }
+    try {
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "get", key }),
+      });
+      const d = await r.json();
+      return d.value ? JSON.parse(d.value) : null;
+    } catch { return null; }
   },
   async set(key, val) {
-    try { await window.storage.set(key, JSON.stringify(val), true); } catch {}
+    try {
+      await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "set", key, value: JSON.stringify(val) }),
+      });
+    } catch {}
   },
 };
 
@@ -609,7 +622,7 @@ CONFIDENTIAL context: ${intake.name} (${intake.relation}) in conflict with ${oth
 ${partAContext}
 ${isPartA
   ? `FIRST HEARING — Party A. Speak privately with ${intake.name}. Ask 3-5 precise questions to deeply understand their perspective, feelings, and desired outcome. When you understand well, say exactly (in ${langName}): "Thank you ${intake.name}. I deeply understand your perspective. I will now hear ${otherName} privately and, after that, I will return to you for a ponderation conversation."`
-  : `FIRST HEARING — Party A. Speak privately with ${intake.name}. Ask 3-5 precise questions to deeply understand their perspective. You are a mediator — your role is to listen privately to each party separately, then facilitate. IMPORTANT: You do NOT ask the user to talk to the other party directly. After understanding well, say EXACTLY this phrase (in ${langName}): "Obrigado, ${intake.name}. Compreendo sua perspectiva com profundidade. Vou agora ouvir ${otherName} em particular e, após isso, retornarei a você para uma conversa de ponderação." — then stop and wait. — Party B. Speak privately with ${intake.name}. Ask 3-5 strategic questions — use your knowledge of the other side to probe for possible middle ground. When you understand well, say exactly (in ${langName}): "Thank you ${intake.name}. I have now heard both parties and will return to ${sessionData?.partA?.name} for the ponderation stage."`
+  : `FIRST HEARING — Party B. Speak privately with ${intake.name}. Ask 3-5 strategic questions — use your knowledge of the other side to probe for possible middle ground. When you understand well, say exactly (in ${langName}): "Thank you ${intake.name}. I have now heard both parties and will return to ${sessionData?.partA?.name} for the ponderation stage."`
 }
 Respond in ${langName}. 2-3 paragraphs. Absolute confidentiality about the other party's specific words.`;
   };
@@ -636,7 +649,7 @@ Respond in ${langName}. 2-3 paragraphs. Absolute confidentiality about the other
       setMsgs(m=>[...(isInit?[]:m),{role:"sergio",text:reply}]);
 
       // Detectar fim da oitiva A e gerar mensagem de convite
-      const donePhrasesA=["retornarei a você","retornarei para","I will return to you","volveré a ti","je reviendrai","tornerò da te","戻ります","我将回来"];
+      const donePhrasesA=["retornarei a você","I will return to you","volveré a ti","je reviendrai","tornerò da te","戻ります","我将回来"];
       if(isPartA&&!isPondering&&donePhrasesA.some(p=>reply.includes(p))){
         setPhase("show_link");
         const updatedMsgs=[...currentMsgs,{role:"sergio",text:reply}];
