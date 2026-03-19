@@ -9,13 +9,14 @@ export default async function handler(req, res) {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
+  // ── GET do Redis ────────────────────────────────────────────────────────────
   if (action === "get") {
     try {
       const r = await fetch(`${url}/get/${encodeURIComponent(key)}`, {
         method: "GET",
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
       const d = await r.json();
@@ -25,14 +26,18 @@ export default async function handler(req, res) {
     }
   }
 
+  // ── SET do Redis ────────────────────────────────────────────────────────────
   if (action === "set") {
     try {
-      const r = await fetch(`${url}/set/${encodeURIComponent(key)}/${encodeURIComponent(typeof value === "string" ? value : JSON.stringify(value))}`, {
-        method: "GET",
-        headers: { 
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
+      const r = await fetch(`${url}/set/${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          value: typeof value === "string" ? value : JSON.stringify(value),
+        }),
       });
       const d = await r.json();
       return res.status(200).json({ ok: true, result: d });
@@ -41,7 +46,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // Chamada ao Claude
+  // ── Chamada ao Claude ───────────────────────────────────────────────────────
   try {
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
